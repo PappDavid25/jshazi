@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"> <!-- A dokumentum karakterkódolását UTF-8-ra állítja. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Reszponzív nézet biztosítása. -->
+    <title>Tic Tac Toe</title> <!-- Az oldal címe. -->
+    <style>
+        /* Alapvető stílusok a játék megjelenítéséhez */
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        .board { display: grid; grid-template-columns: repeat(3, 100px); gap: 5px; } /* A játékmező rácsa */
+        .cell { display: flex; justify-content: center; align-items: center; width: 100px; height: 100px; background: #f0f0f0; font-size: 2em; cursor: pointer; } /* A játék cellái */
+        .status { margin: 20px; } /* Az állapot szöveg stílusa */
+    </style>
+</head>
+<body>
+    <div>
+        <!-- Játék mód választó gombok -->
+        <button onclick="setMode(false)">Két játékos mód</button> <!-- Két játékos mód aktiválása. -->
+        <button onclick="setMode(true)">Egy játékos mód</button> <!-- Egy játékos mód aktiválása. -->
+    </div>
+    <div class="board" id="board"></div> <!-- A játékmező helye. -->
+    <div class="status" id="status"></div> <!-- Az állapot szöveg helye. -->
+
+    <script>
+        const board = document.getElementById('board'); // A játékmező DOM elemének referenciája.
+        const status = document.getElementById('status'); // Az állapot szöveg DOM elemének referenciája.
+        let currentPlayer = 'X'; // Az aktuális játékos ('X' kezd mindig).
+        let boardState = Array(9).fill(null); // A játékmezők aktuális állapota (null, ha üres).
+        let singlePlayerMode = false; // Egyjátékos mód állapota (alapértelmezett: false).
+
+        function createBoard() {
+            // Újrarendereli a játékmezőt az aktuális állapot alapján.
+            board.innerHTML = boardState.map((_, i) => `<div class="cell" data-index="${i}"></div>`).join('');
+        }
+
+        function checkWinner() {
+            // Ellenőrzi, hogy van-e nyertes.
+            const wins = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Sorok
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Oszlopok
+                [0, 4, 8], [2, 4, 6]             // Átlók
+            ];
+            return wins.some(line => line.every(i => boardState[i] === currentPlayer)); // Ellenőrzi, hogy valamelyik nyerő kombináció teljes.
+        }
+
+        function computerMove() {
+            // A számítógép lépése (véletlenszerűen választ a szabad helyek közül).
+            const emptyCells = boardState.map((_, i) => i).filter(i => boardState[i] === null); // Szabad mezők.
+            const move = emptyCells[Math.floor(Math.random() * emptyCells.length)]; // Véletlenszerűen választ egyet.
+            boardState[move] = 'O'; // A mezőt 'O'-ra állítja.
+            document.querySelector(`[data-index="${move}"]`).textContent = 'O'; // Frissíti a DOM-ot.
+        }
+
+        function resetGame() {
+            // Új játék inicializálása.
+            boardState = Array(9).fill(null); // A mezők kiürítése.
+            currentPlayer = 'X'; // Az 'X' kezdi a játékot.
+            status.textContent = ''; // Az állapot szöveg törlése.
+            board.style.pointerEvents = 'auto'; // A mezők újra kattinthatók.
+            createBoard(); // A mező újrarenderelése.
+        }
+
+        function setMode(singlePlayer) {
+            // Beállítja a játék módját (egyjátékos vagy kétjátékos).
+            singlePlayerMode = singlePlayer; // Az egyjátékos mód beállítása.
+            resetGame(); // Új játék indítása.
+        }
+
+        board.addEventListener('click', (e) => {
+            // Kezeli a mezőkre kattintást.
+            const index = e.target.dataset.index; // A kattintott mező indexe.
+            if (!index || boardState[index]) return; // Ha a mező nem kattintható, kilép.
+
+            boardState[index] = currentPlayer; // Az aktuális játékos szimbóluma kerül a mezőre.
+            e.target.textContent = currentPlayer; // Frissíti a DOM-ot.
+
+            if (checkWinner()) {
+                // Ellenőrzi, hogy van-e nyertes.
+                status.textContent = `${currentPlayer} nyert!`; // Kiírja a győztest.
+                board.style.pointerEvents = 'none'; // A mezők kattinthatatlanná válnak.
+                return;
+            }
+
+            if (boardState.every(cell => cell)) {
+                // Ellenőrzi, hogy döntetlen-e.
+                status.textContent = 'Döntetlen!'; // Kiírja a döntetlent.
+                return;
+            }
+
+            currentPlayer = singlePlayerMode ? 'X' : (currentPlayer === 'X' ? 'O' : 'X'); // Játékosváltás.
+
+            if (singlePlayerMode && currentPlayer === 'O') {
+                // Ha egyjátékos módban van és a gép lép.
+                computerMove(); // A gép lép.
+                if (checkWinner()) {
+                    status.textContent = 'O nyert!'; // Kiírja, ha a gép nyert.
+                    board.style.pointerEvents = 'none'; // A mezők kattinthatatlanná válnak.
+                }
+                currentPlayer = 'X'; // A játékos következik.
+            }
+        });
+
+        createBoard(); // Létrehozza az induló játékmezőt.
+    </script>
+</body>
+</html>
